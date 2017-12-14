@@ -1,10 +1,14 @@
 const jwt = require('jsonwebtoken')
 
 const Token = (secret) => {
-  async function sign (scopes, expiresIn = '1h') {
-    return jwt.sign({
-      scopes
-    }, secret, { expiresIn })
+  if (!secret) {
+    throw new Error('secret must be provided')
+  }
+
+  async function sign (scopes = [], expiresIn = '1h') {
+    const data = { scopes }
+    const options = { expiresIn }
+    return jwt.sign(data, secret, options)
   }
 
   async function verify (token) {
@@ -15,7 +19,7 @@ const Token = (secret) => {
     })
   }
 
-  async function validateScopes (requiredScopes, providedScopes) {
+  async function validateScopes (requiredScopes = [], providedScopes = []) {
     return requiredScopes.map(scope => providedScopes.includes(scope)).every(isTrue => isTrue)
   }
 
