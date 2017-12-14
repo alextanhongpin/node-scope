@@ -1,0 +1,13 @@
+{
+  "name": "node-scope",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/alextanhongpin/node-scope.git",
+  "author": "alextanhongpin <alextan@seekasia.com>",
+  "license": "MIT",
+  "dependencies": {
+    "jsonwebtoken": "^8.1.0",
+    "koa": "^2.4.1"
+  },
+  "devDependencies": {}
+}
