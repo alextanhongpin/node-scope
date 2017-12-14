@@ -1,35 +1,26 @@
 
 const Koa = require('koa')
-const jwt = require('jsonwebtoken')
+const Token = require('./token')(process.env.SECRET || '<your_secret_here>')
 
-const secret = '$3cr3t'
 const port = 3000
-
-async function sign (scopes, expiresIn = '1h') {
-  return jwt.sign({
-    scopes
-  }, secret, { expiresIn: '1h' })
-}
-
-async function verify (token) {
-  return new Promise((resolve, reject) => {
-    jwt.verify(token, secret, (err, decoded) => {
-      err ? reject(err) : resolve(decoded)
-    })
-  })
-}
+const REQUIRED_SCOPES = ['user:read']
 
 async function main () {
   const app = new Koa()
 
-  const token = await sign(['cars:read', 'cars:write', 'cars:delete'])
-  console.log('got token:', token)
+  // Generate a token with scopes for testing purpose
+  const encoded = await Token.sign(['user:read', 'user:write', 'user:delete'])
+  console.log(`got encoded token: ${encoded}`)
 
   app.use(async (ctx, next) => {
     try {
       // Call the validation middleware
       await next()
-      ctx.body = 'hello'
+
+      ctx.status = 200
+      ctx.body = {
+        message: 'scope is valid'
+      }
     } catch (err) {
       ctx.status = 400
       ctx.body = {
@@ -38,18 +29,14 @@ async function main () {
     }
   })
 
-  // Validation middleware
   app.use(async (ctx, next) => {
-    const allowedScopes = 'cars:read'
     const { token } = ctx.query
-    const decoded = await verify(token)
-    if (!decoded.scopes) {
-      throw new Error('scope does not exist')
+    const decoded = await Token.verify(token)
+    const isValid = await Token.validateScopes(REQUIRED_SCOPES, decoded.scopes)
+    if (!isValid) {
+      throw new Error('scope provided is invalid')
     }
-    if (!decoded.scopes.includes(allowedScopes)) {
-      throw new Error('scope is not valid')
-    }
-    console.log('decoded:', decoded)
+    console.log(`decoded token: ${JSON.stringify(decoded)}`)
   })
 
   app.listen(port)
